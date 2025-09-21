@@ -1,6 +1,6 @@
 # Family Album
 
-Simple static photo gallery that groups images by year and person.
+Simple static photo gallery that groups images by year and person. [Demo](./src/demo/)
 
 Files included
 
