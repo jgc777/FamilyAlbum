@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Family Album</title>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --card:#ffffff;
+    --muted:#6b7280;
+    --gap:18px;
+    --header-h:72px;
+  }
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:#0f172a;background:var(--bg)}
+  header{
+    position:fixed;
+    inset:0 0 auto 0;
+    top:0;
+    left:0;
+    right:0;
+    height:var(--header-h);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 20px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.96));
+    border-bottom:1px solid #e6e9ed;
+    z-index:120;
+    box-shadow: 0 4px 18px rgba(2,6,23,0.06);
+  }
+  h1{margin:0;font-size:18px}
+  .controls{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:4px;
+  }
+  label{font-size:14px;color:var(--muted);white-space:nowrap}
+  select{padding:8px 10px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:14px}
+  button{padding:8px 12px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer}
+  main{padding:22px;max-width:1200px;margin:0 auto;padding-top:calc(var(--header-h) + 20px)}
+  section.year{margin-bottom:34px}
+  section.year h2{margin:6px 0 14px;font-size:18px;color:#111;display:flex;align-items:center;gap:12px}
+  .grid-year{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:var(--gap);
+  }
+  .card{
+    background:var(--card);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 8px 22px rgba(15,23,42,0.06);
+    display:flex;flex-direction:column;
+  }
+  .imgwrap{
+    background:#0b1220;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  }
+  .imgwrap img{
+    display:block;
+    border-radius:8px;
+    box-shadow:0 6px 18px rgba(2,6,23,0.18);
+    background:transparent;
+    max-width:100%;
+    max-height:60vh;
+    object-fit:contain;
+  }
+  .imgwrap img.portrait{
+    width:auto;
+    height:70vh;
+    max-width:100%;
+  }
+  .imgwrap img.landscape{
+    width:100%;
+    height:auto;
+    max-height:60vh;
+  }
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:0 14px 12px}
+  .tag{background:rgba(0,0,0,0.12);color:#fff;padding:6px 10px;border-radius:999px;font-size:13px;cursor:pointer}
+  .small{font-size:12px;color:var(--muted)}
+  .no-photos{padding:28px;text-align:center;color:var(--muted);background:linear-gradient(180deg,#fff,#fafafa);border-radius:10px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:220}
+  .modal[open]{display:flex}
+  .modal .inner{
+    width:100%;
+    max-width:calc(100vw - 80px);
+    max-height:calc(100vh - 80px);
+    background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 30px 80px rgba(2,6,23,0.6);
+    display:flex;align-items:center;justify-content:center;position:relative;padding:0;
+  }
+  .modal img{
+    display:block;
+    max-width: calc(100vw - 140px);
+    max-height: calc(100vh - 140px);
+    width:auto;
+    height:auto;
+    object-fit:contain;
+  }
+  .modal .info{position:absolute;left:12px;bottom:12px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.92);font-size:14px;color:#111;box-shadow:0 6px 20px rgba(2,6,23,0.12)}
+  .closeBtn{position:absolute;right:12px;top:12px;background:#fff;border-radius:999px;padding:8px 10px;border:1px solid #e5e7eb;cursor:pointer;z-index:3}
+  @media (max-width:520px){
+    :root{--header-h:84px}
+    main{padding-top:calc(var(--header-h) + 16px)}
+    .grid-year{grid-template-columns:1fr}
+    .imgwrap img{max-height:50vh}
+    .imgwrap img.portrait{height:55vh}
+    .modal img{max-width:calc(100vw - 60px); max-height:calc(100vh - 60px)}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;gap:12px;align-items:center">
+    <h1>Family Album</h1>
+  </div>
+
+  <div class="controls" aria-hidden="false">
+    <label for="yearSelect">Year:&nbsp;
+      <select id="yearSelect" aria-label="Select year">
+        <option value="all">-</option>
+      </select>
+    </label>
+
+    <label for="personSelect">Person:&nbsp;
+      <select id="personSelect" aria-label="Select person">
+        <option value="all">-</option>
+      </select>
+    </label>
+
+    <button id="clearBtn" title="Clear filter">Clear</button>
+  </div>
+</header>
+
+<main>
+  <div id="container" aria-live="polite"></div>
+</main>
+
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="inner" id="modalInner">
+    <button class="closeBtn" id="modalClose" aria-label="Cerrar">✕</button>
+    <img id="modalImg" alt="">
+    <div class="info" id="modalInfo" aria-hidden="false"></div>
+  </div>
+</div>
+
+<script>
+(async function(){
+  let json;
+  try {
+    document.getElementById('container').innerHTML = '<div>Loading data...</div>';
+    json = await fetch('photos.json').then(r=>r.json());
+  } catch (err) {
+    document.getElementById('container').innerHTML = '<div class="no-photos">Error loading image data.</div>';
+    console.error(err);
+    return;
+  }
+
+  const yearsMap = new Map();
+  const personsSet = new Set();
+  for (const y of json.years || []) {
+    const year = y.year;
+    const arr = (y.photos || []).map(p => Object.assign({ year }, p));
+    arr.forEach(p => { if (Array.isArray(p.persons)) p.persons.forEach(n => personsSet.add(n)); });
+    yearsMap.set(year, arr);
+  }
+
+  const years = Array.from(yearsMap.keys()).sort((a,b) => (+a) - (+b));
+
+  const yearSelect = document.getElementById('yearSelect');
+  const personSelect = document.getElementById('personSelect');
+  const clearBtn = document.getElementById('clearBtn');
+  const container = document.getElementById('container');
+
+  years.forEach(y => {
+    const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+    yearSelect.appendChild(opt);
+  });
+  const persons = Array.from(personsSet).sort((a,b)=> a.localeCompare(b, 'es', {sensitivity:'base'}));
+  persons.forEach(p => {
+    const opt = document.createElement('option'); opt.value = p; opt.textContent = p;
+    personSelect.appendChild(opt);
+  });
+
+  function adjustOrientationClass(img) {
+    if (!img.naturalWidth || !img.naturalHeight) return;
+    img.classList.remove('portrait','landscape');
+    if (img.naturalHeight > img.naturalWidth) img.classList.add('portrait');
+    else img.classList.add('landscape');
+  }
+
+  function render() {
+    container.innerHTML = '';
+    const yFilter = yearSelect.value;
+    const personFilter = personSelect.value;
+    let anyShown = false;
+
+    const filteredYears = yFilter === 'all' ? years : years.filter(y => y === yFilter);
+
+    for (const y of filteredYears) {
+      const items = yearsMap.get(y) || [];
+      const visible = items.filter(it => {
+        if (personFilter === 'all') return true;
+        if (!it.persons || !it.persons.length) return false;
+        return it.persons.some(name => name.toLowerCase().includes(personFilter.toLowerCase()));
+      });
+
+      if (!visible.length) continue;
+
+      anyShown = true;
+      const section = document.createElement('section');
+      section.className = 'year';
+      const h = document.createElement('h2');
+      h.textContent = y + ' — ' + visible.length + ' photo' + (visible.length>1?'s':'');
+      section.appendChild(h);
+
+      const grid = document.createElement('div');
+      grid.className = 'grid-year';
+
+      visible.forEach(p => {
+        const card = document.createElement('article');
+        card.className = 'card';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'imgwrap';
+
+        const a = document.createElement('a');
+        a.href = p.data ? p.data : p.path;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.title = 'Open image in new tab';
+
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.src = p.data ? p.data : p.path;
+
+        img.addEventListener('load', () => adjustOrientationClass(img));
+
+        a.addEventListener('click', (ev) => {
+          if (ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+          ev.preventDefault();
+          openModal(p);
+        });
+
+        a.appendChild(img);
+        wrap.appendChild(a);
+
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'tags';
+        if (p.persons && p.persons.length) {
+          p.persons.forEach(name => {
+            const t = document.createElement('span');
+            t.className = 'tag';
+            t.textContent = name;
+            t.title = 'Filter by ' + name;
+            t.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              personSelect.value = name;
+              render();
+              window.scrollTo({top:0,behavior:'smooth'});
+            });
+            tagsDiv.appendChild(t);
+          });
+        } else {
+          const none = document.createElement('span'); none.className='tag'; none.textContent='Sin nombre'; tagsDiv.appendChild(none);
+        }
+
+        card.appendChild(wrap);
+        card.appendChild(tagsDiv);
+        grid.appendChild(card);
+      });
+
+      section.appendChild(grid);
+      container.appendChild(section);
+    }
+
+    if (!anyShown) {
+      container.innerHTML = '<div class="no-photos">No matching results.</div>';
+    }
+  }
+
+  const modal = document.getElementById('modal');
+  const modalImg = document.getElementById('modalImg');
+  const modalInfo = document.getElementById('modalInfo');
+  const modalClose = document.getElementById('modalClose');
+
+  function openModal(p) {
+    modal.setAttribute('open','');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+    modalImg.src = p.data ? p.data : p.path;
+    modalImg.addEventListener('load', function onLoad(){
+      adjustOrientationClass(modalImg);
+      modalImg.removeEventListener('load', onLoad);
+    });
+    const personsText = (p.persons && p.persons.length) ? p.persons.join(', ') : '—';
+    modalInfo.innerHTML = `<div style="margin-top:6px;color:#374151">Year: ${p.year} &nbsp;&middot;&nbsp; Persons: ${personsText}</div>`;
+  }
+
+  function closeModal() {
+    modal.removeAttribute('open');
+    modal.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+    modalImg.src = '';
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  yearSelect.addEventListener('change', render);
+  personSelect.addEventListener('change', render);
+  clearBtn.addEventListener('click', () => { yearSelect.value='all'; personSelect.value='all'; render(); });
+
+  render();
+
+})();
+</script>
+</body>
+</html>
